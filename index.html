@@ -789,7 +789,7 @@ async function sendChat(){
   ty.innerHTML='<div class="tdots"><span></span><span></span><span></span></div>';
   document.getElementById('cwMsgs').appendChild(ty);scrollMsgs();
   try{
-    const r=await fetch('asal-chat.pesmobileefootball1234.workers.dev',{
+    const r=await fetch('https://asal-chat.pesmobileefootball1234.workers.dev', {
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',max_tokens:1000,
