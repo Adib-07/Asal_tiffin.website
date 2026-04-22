@@ -584,8 +584,8 @@ footer{background:var(--obsidian);border-top:1px solid rgba(184,150,46,.12);padd
     <p>Ready for food that feels like home? Get in touch to subscribe, enquire about bulk orders, or simply say hello. We reply within 24 hours.</p>
     <div class="cdetails">
       <div class="citem"><div class="cicon">📍</div><div class="citem-t"><div class="cl">Location</div><div class="cv">Mumbai, Maharashtra</div></div></div>
-      <div class="citem"><div class="cicon">📞</div><div class="citem-t"><div class="cl">Phone / WhatsApp</div><div class="cv">+91 XXXXX XXXXX</div></div></div>
-      <div class="citem"><div class="cicon">✉️</div><div class="citem-t"><div class="cl">Email</div><div class="cv">hello@asal.in</div></div></div>
+      <div class="citem"><div class="cicon">📞</div><div class="citem-t"><div class="cl">Phone / WhatsApp</div><div class="cv">+91 XXXXX XXXXx</div></div></div>
+      <div class="citem"><div class="cicon">✉️</div><div class="citem-t"><div class="cl">Email</div><div class="cv">asal_kitchen@.in</div></div></div>
       <div class="citem"><div class="cicon">☀️</div><div class="citem-t"><div class="cl">Lunch Delivery</div><div class="cv">12:00 PM – 3:00 PM</div></div></div>
       <div class="citem"><div class="cicon">🌙</div><div class="citem-t"><div class="cl">Dinner Delivery</div><div class="cv">7:00 PM – 11:00 PM</div></div></div>
       <div class="citem"><div class="cicon">📅</div><div class="citem-t"><div class="cl">Working Days</div><div class="cv">Monday to Saturday</div></div></div>
@@ -815,7 +815,7 @@ const INSTANT = [
   { t:['app','android','ios','play store','app store','download','mobile app'],
     r:"📱 ASAL App coming soon!\n\nAndroid (Play Store) & iOS (App Store) apps are in development 🚀\n\nFor now, order right here on the website — click 'Order Now' on any plan!" },
   { t:['thank','thanks','thank you','great','awesome','nice','love it'],
-    r:"Thank you so much! 🙏 Your kind words mean the world to us as a new brand. We put our heart into every tiffin 💛" },
+    r:"Thank you so much! 🙏 Your kind words mean the world to us as a new brand. We put our heart into every tiffin 💛" }
   { t:['bye','goodbye','ok thanks','ok bye'],
     r:"Take care! 🙏 Come back anytime — we're always here. Enjoy your ASAL meal! 💛\n\n*Ghar Ka Khana, At Your Doorstep* ✨" },
   { t:['khana','dabba','bhojan','khaana','chahiye','order karna','tiffin kya'],
@@ -830,19 +830,26 @@ function getInstantReply(msg) {
   return null;
 }
 
-let chatOpen=false, chatHistory=[], isBotTyping=false;
+let chatOpen = false, chatHistory = [], isBotTyping = false;
+let welcomeSent = false; // 1. Added this flag to track if greeting was sent
 
-function toggleChat(){
-  chatOpen=!chatOpen;
-  const win=document.getElementById('chatWin');
-  win.classList.toggle('on',chatOpen);
-  if(chatOpen){
+function toggleChat() {
+  chatOpen = !chatOpen;
+  const win = document.getElementById('chatWin');
+  win.classList.toggle('on', chatOpen);
+
+  if (chatOpen) {
     document.getElementById('cinput').focus();
-    if(chatHistory.length===0){
-      setTimeout(()=>showTypingThenMsg(
-        "Namaste! 🙏 I'm ASAL's AI assistant — ask me anything about our menu, delivery timings, pricing, or how to subscribe. How can I help you today?",
-        700
-      ),200);
+    
+    // 2. Updated condition: Only send if it hasn't been sent before
+    if (!welcomeSent) {
+      welcomeSent = true; // Mark as sent immediately
+      setTimeout(() => {
+        showTypingThenMsg(
+          "Namaste! 🙏 I'm ASAL's AI assistant — ask me anything about our menu, delivery timings, pricing, or how to subscribe. How can I help you today?", 
+          700
+        );
+      }, 200);
     }
   }
 }
