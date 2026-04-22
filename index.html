@@ -585,7 +585,7 @@ footer{background:var(--obsidian);border-top:1px solid rgba(184,150,46,.12);padd
     <div class="cdetails">
       <div class="citem"><div class="cicon">📍</div><div class="citem-t"><div class="cl">Location</div><div class="cv">Mumbai, Maharashtra</div></div></div>
       <div class="citem"><div class="cicon">📞</div><div class="citem-t"><div class="cl">Phone / WhatsApp</div><div class="cv">+91 XXXXX XXXXX</div></div></div>
-      <div class="citem"><div class="cicon">✉️</div><div class="citem-t"><div class="cl">Email</div><div class="cv">theasalway@gmail.com</div></div></div>
+      <div class="citem"><div class="cicon">✉️</div><div class="citem-t"><div class="cl">Email</div><div class="cv">hello@asal.in</div></div></div>
       <div class="citem"><div class="cicon">☀️</div><div class="citem-t"><div class="cl">Lunch Delivery</div><div class="cv">12:00 PM – 3:00 PM</div></div></div>
       <div class="citem"><div class="cicon">🌙</div><div class="citem-t"><div class="cl">Dinner Delivery</div><div class="cv">7:00 PM – 11:00 PM</div></div></div>
       <div class="citem"><div class="cicon">📅</div><div class="citem-t"><div class="cl">Working Days</div><div class="cv">Monday to Saturday</div></div></div>
@@ -771,64 +771,185 @@ function submitReview(){
   alert('🙏 Thank you, '+name+'!\nYour review has been published. It means the world to us as a new brand.');
 }
 
-// CHATBOT
-let chatOpen=false,history=[];
+// ── ASAL AI CHATBOT ──────────────────────────────────────────
+// Calls /api/chat — a Vercel serverless function in the same project
+// API key lives securely in Vercel env vars, never in this file
+// ─────────────────────────────────────────────────────────────
+
+const CHAT_ENDPOINT = '/api/chat';
+
+// Smart instant answers — no API needed, instant replies
+const INSTANT = [
+  { t:['hello','hi','hey','namaste','namaskar','hii','good morning','good evening','salaam'],
+    r:"Namaste! 🙏 Welcome to ASAL — *Ghar Ka Khana, At Your Doorstep*. I can help with our menu, pricing, delivery timings and subscriptions. What would you like to know? 😊" },
+  { t:['menu','plans','what do you offer','food options','tiffin options','all plans','show menu','items','dishes'],
+    r:"Our full menu 🍱\n\n🍛 Classic Thali — ₹120/meal (Most Popular)\n🥗 Lite & Fit — ₹140/meal\n🏢 Office Premium — ₹160/meal\n🎓 Student Saver — ₹90/meal\n🌶️ Weekend Special — ₹200/meal\n🧆 Custom Plan — ₹150+/meal\n\nMonthly subscription saves 10%! Click 'Order Now' on any plan 😊" },
+  { t:['price','pricing','cost','how much','rate','charges','kitna','kitne','affordable','rates'],
+    r:"ASAL pricing 💛\n\n🎓 Student Saver — ₹90/meal\n🍛 Classic Thali — ₹120/meal\n🥗 Lite & Fit — ₹140/meal\n🏢 Office Premium — ₹160/meal\n🌶️ Weekend Special — ₹200/meal\n🧆 Custom Plan — ₹150+/meal\n\nMonthly plans save 10% automatically!" },
+  { t:['timing','time','when','delivery time','kitne baje','schedule','slot','hours','what time','open'],
+    r:"ASAL Delivery Timings ⏰\n\n☀️ Lunch: 12:00 PM – 3:00 PM\n🌙 Dinner: 7:00 PM – 11:00 PM\n📅 Days: Monday to Saturday\n\nOrder before 10 AM for same-day lunch delivery!" },
+  { t:['delivery','deliver','where','area','location','mumbai','which area','coverage','zone','pincode'],
+    r:"🗺️ We deliver across Mumbai!\n\nAndheri, Bandra, BKC, Powai, Thane, Dadar, Lower Parel, Juhu, Malad, Borivali and more.\n\nAll-India expansion coming soon 🚀" },
+  { t:['subscribe','subscription','monthly','sign up','how to order','how to subscribe','start','join','enroll'],
+    r:"Subscribing is easy! 🎉\n\n1️⃣ Click 'Order Now' on your plan\n2️⃣ Pick One-Time or Monthly\n3️⃣ Enter name, phone & address\n4️⃣ Pay securely via Razorpay\n\nMonthly saves 10% vs daily orders!" },
+  { t:['classic thali','classic','regular tiffin','normal tiffin','dal rice'],
+    r:"🍛 Classic Thali — ₹120/meal\n\n• Fresh Dal\n• 2 Sabzis (seasonal)\n• 4 Soft Rotis\n• Steamed Rice\n• Pickle & Papad\n\nOur most loved plan — complete balanced homestyle meal! Click 'Order Now' 😊" },
+  { t:['student','college','hostel','student saver','budget','cheap plan'],
+    r:"🎓 Student Saver — ₹90/meal\n\nPerfect for college students!\n• Dal • Sabzi • 3 Rotis • Steamed Rice\n\nFilling, homemade & easy on the pocket 🙌 Monthly plan saves another 10%!" },
+  { t:['office','corporate','bulk','company','team','employees','office premium','10 people'],
+    r:"🏢 Office Premium — ₹160/meal\n\n• 5-item tiffin\n• Sweet dish included\n• Buttermilk included\n\nBulk orders (10+ people) get special rates! Email hello@asal.in for a corporate quote 💼" },
+  { t:['healthy','lite fit','health','diet','protein','low oil','fitness','lite and fit'],
+    r:"🥗 Lite & Fit — ₹140/meal\n\n• Multigrain rotis\n• Low-oil steamed veggies\n• High-protein dal\n• Fresh fruit\n\nZero preservatives, zero excess oil 💪 Perfect for health goals!" },
+  { t:['weekend','biryani','paneer','mutton','weekend special','saturday','sunday'],
+    r:"🌶️ Weekend Special — ₹200/meal\n\n• Biryani OR Shahi Paneer OR Mutton Curry\n• Raita + Dessert\n\nAvailable Saturdays & Sundays 🎉 A treat you deserve!" },
+  { t:['payment','pay','upi','gpay','paytm','phonepe','card','net banking','razorpay','how to pay'],
+    r:"💳 All payments via Razorpay:\n\n✅ UPI (GPay, PhonePe, Paytm, BHIM)\n✅ Debit & Credit Cards\n✅ Net Banking\n✅ Monthly Auto-subscription\n\n🔒 100% secure checkout!" },
+  { t:['contact','reach','phone','email','whatsapp','support','help','talk to'],
+    r:"📞 Reach ASAL anytime!\n\n📧 Email: hello@asal.in\n💬 WhatsApp available\n📍 Mumbai, Maharashtra\n\nWe reply within 24 hours!" },
+  { t:['about','who are you','what is asal','asal story','new brand','just launched'],
+    r:"🏡 About ASAL\n\nWe're a brand new homemade tiffin service from Mumbai — born from one belief: everyone deserves a real home-cooked meal, no matter how far from home.\n\nTagline: *Ghar Ka Khana, At Your Doorstep* 💛" },
+  { t:['fresh','quality','ingredients','preservatives','homemade','how is it made','cooked daily'],
+    r:"🌿 ASAL Quality Promise:\n\n✅ Cooked fresh every morning\n✅ Zero preservatives\n✅ Daily fresh ingredients\n✅ Traditional recipes\n✅ Clean hygienic kitchen\n\nYour health is why we started ASAL 💛" },
+  { t:['cancel','refund','return','stop subscription','pause'],
+    r:"We understand! 🙏\n\nFor cancellations:\n📧 Email hello@asal.in\n💬 Or WhatsApp us\n\nWe process within 24 hours. Refunds in 5–7 business days." },
+  { t:['app','android','ios','play store','app store','download','mobile app'],
+    r:"📱 ASAL App coming soon!\n\nAndroid (Play Store) & iOS (App Store) apps are in development 🚀\n\nFor now, order right here on the website — click 'Order Now' on any plan!" },
+  { t:['thank','thanks','thank you','great','awesome','nice','love it'],
+    r:"Thank you so much! 🙏 Your kind words mean the world to us as a new brand. We put our heart into every tiffin 💛" },
+  { t:['bye','goodbye','ok thanks','ok bye'],
+    r:"Take care! 🙏 Come back anytime — we're always here. Enjoy your ASAL meal! 💛\n\n*Ghar Ka Khana, At Your Doorstep* ✨" },
+  { t:['khana','dabba','bhojan','khaana','chahiye','order karna','tiffin kya'],
+    r:"Namaste! 🙏 ASAL mein aapka swagat hai!\n\n🍛 Classic Thali — ₹120\n🎓 Student Saver — ₹90\n🏢 Office Premium — ₹160\n\n⏰ Lunch 12–3 PM | Dinner 7–11 PM\n📅 Mon–Sat\n\n'Order Now' click karein! 😊" }
+];
+
+function getInstantReply(msg) {
+  const m = msg.toLowerCase();
+  for (const item of INSTANT) {
+    if (item.t.some(tag => m.includes(tag))) return item.r;
+  }
+  return null;
+}
+
+let chatOpen=false, chatHistory=[], isBotTyping=false;
+
 function toggleChat(){
   chatOpen=!chatOpen;
-  document.getElementById('chatWin').classList.toggle('on',chatOpen);
-  if(chatOpen)document.getElementById('cinput').focus();
-}
-function sendQ(msg){document.getElementById('cinput').value=msg;sendChat();}
-async function sendChat(){
-  const inp=document.getElementById('cinput');
-  const msg=inp.value.trim();if(!msg)return;
-  inp.value='';addMsg(msg,'user');
-  history.push({role:'user',content:msg});
-  const ty=document.createElement('div');
-  ty.className='cmsg typing';ty.id='ty';
-  ty.innerHTML='<div class="tdots"><span></span><span></span><span></span></div>';
-  document.getElementById('cwMsgs').appendChild(ty);scrollMsgs();
-  try{
-    const r=await fetch('https://asal-chat.pesmobileefootball1234.workers.dev', {
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',max_tokens:1000,
-        system:`You are ASAL's friendly AI assistant. ASAL is a brand new premium homemade tiffin service based in Mumbai, India. Tagline: "Ghar Ka Khana, At Your Doorstep".
-
-KEY FACTS:
-- Just launched — new business, honest and heartfelt brand
-- Delivery: Mumbai only currently. All-India expansion coming soon
-- Timings: Lunch (12 PM – 3 PM) & Dinner (7 PM – 11 PM), Monday to Saturday
-- Payments: Razorpay — UPI, Card, NetBanking, One-time & Monthly Subscription
-
-MENU:
-- Classic Thali: Dal, 2 sabzis, 4 rotis, rice, pickle & papad — ₹120/meal
-- Lite & Fit: Low-oil, high-protein — multigrain roti, veggies, dal, fruit — ₹140/meal
-- Office Premium: 5-item tiffin + sweet + buttermilk, bulk 10+ — ₹160/meal
-- Student Saver: Dal, sabzi, 3 rotis, rice — ₹90/meal
-- Weekend Special: Biryani/shahi paneer/mutton + raita + dessert — ₹200/meal
-- Custom Plan: Build your own — ₹150+/meal
-
-Be warm, genuine, and concise (2–4 sentences). Use occasional emojis. If they want to order, direct them to click "Order Now". Speak in English unless they write in Hindi/Marathi.`,
-        messages:history
-      })
-    });
-    const d=await r.json();
-    document.getElementById('ty')?.remove();
-    const reply=d.content?.[0]?.text||'Sorry, I had trouble with that. Please try again! 🙏';
-    history.push({role:'assistant',content:reply});
-    addMsg(reply,'bot');
-  }catch(e){
-    document.getElementById('ty')?.remove();
-    addMsg("I'm having a little trouble right now. Please try again in a moment! 🙏",'bot');
+  const win=document.getElementById('chatWin');
+  win.classList.toggle('on',chatOpen);
+  if(chatOpen){
+    document.getElementById('cinput').focus();
+    if(chatHistory.length===0){
+      setTimeout(()=>showTypingThenMsg(
+        "Namaste! 🙏 I'm ASAL's AI assistant — ask me anything about our menu, delivery timings, pricing, or how to subscribe. How can I help you today?",
+        700
+      ),200);
+    }
   }
+}
+
+function sendQ(q){ document.getElementById('cinput').value=q; sendChat(); }
+
+async function sendChat(){
+  if(isBotTyping) return;
+  const inp=document.getElementById('cinput');
+  const msg=inp.value.trim();
+  if(!msg) return;
+  inp.value=''; inp.disabled=true;
+  addMsg(msg,'user');
+  chatHistory.push({role:'user',content:msg});
+  showTyping(); isBotTyping=true;
+
+  try{
+    // Try instant answer first (zero latency)
+    const instant = getInstantReply(msg);
+    if(instant){
+      await new Promise(r=>setTimeout(r,400)); // tiny delay feels natural
+      hideTyping();
+      finishBotMsg(instant);
+      return;
+    }
+
+    // Call Vercel API route for complex questions
+    const res = await fetch(CHAT_ENDPOINT,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages: chatHistory.slice(-10)})
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    hideTyping();
+    finishBotMsg(data.reply || "I had a small issue. Please try again or email hello@asal.in 🙏");
+
+  } catch(e){
+    hideTyping();
+    // Graceful fallback — always give a useful answer
+    const fallback = getSmartFallback(msg);
+    finishBotMsg(fallback);
+  } finally {
+    isBotTyping=false; inp.disabled=false; inp.focus();
+  }
+}
+
+function getSmartFallback(msg) {
+    const m = msg.toLowerCase();
+    // 1. Menu & Plans
+    if (/(menu|plan|food|tiffin|eat|price|cost|rate|much)/i.test(m)) {
+        return "🍱 *Our Best Sellers:*\n• Student Saver: ₹90 (Budget Friendly)\n• Classic Thali: ₹120 (Home Style)\n• Lite & Fit: ₹140 (Low Oil)\n• Office Premium: ₹180 (Full Meal)\n\nType 'Order' to start!";
+    }
+    // 2. Timings
+    if (/(time|timing|when|delivery|slot)/i.test(m)) {
+        return "⏰ *Delivery Schedule:*\n☀️ Lunch: 12:00 PM - 3:00 PM\n🌙 Dinner: 7:00 PM - 10:30 PM\n📅 Serving Monday - Saturday.";
+    }
+    // 3. Location/Area
+    if (/(area|location|place|deliver|reach|city|where)/i.test(m)) {
+        return "📍 We deliver across all major sectors and nearby colleges! To confirm your specific building, just type 'Order Now' and enter your pincode.";
+    }
+    // 4. Trial Meals
+    if (/(trial|sample|test|once|single)/i.test(m)) {
+        return "✨ Want to try us first? You can book a *One-Day Trial Meal* starting at just ₹99. No subscription required!";
+    }
+    // 5. Hygiene & Quality
+    if (/(clean|hygiene|safe|quality|fresh|health|oil)/i.test(m)) {
+        return "🥗 *Quality Guarantee:* We use 100% fresh ingredients and refined sunflower oil. Our kitchen is sanitized daily, and our staff follows strict hygiene protocols.";
+    }
+    // 6. Payment Methods
+    if (/(pay|payment|gpay|upi|cash|card|online)/i.test(m)) {
+        return "💳 We accept Google Pay, PhonePe, UPI, and all major Credit/Debit cards. Cash on Delivery is available for daily orders!";
+    }
+    // 7. Contact & Support
+    if (/(contact|email|phone|help|support|talk|agent)/i.test(m)) {
+        return "📞 Need more help? \n• Email: hello@asal.in\n• WhatsApp: Available 10am-8pm\n• Or just leave your number here and we'll call you back!";
+    }
+    // 8. Cancellation/Refunds
+    if (/(cancel|refund|stop|pause)/i.test(m)) {
+        return "🔄 You can pause or cancel your subscription anytime! Just let us know 24 hours in advance to avoid any charges.";
+    }
+    // Default Fallback
+    return "Great question! 🤔 I'm not quite sure about that one. Please email **hello@asal.in** or message us on WhatsApp for a quick human response!";
+}
+
+function finishBotMsg(text){
+  chatHistory.push({role:'assistant',content:text});
+  addMsg(text,'bot');
+}
+function showTyping(){
+  const el=document.createElement('div');
+  el.className='cmsg typing'; el.id='tyIndicator';
+  el.innerHTML='<div class="tdots"><span></span><span></span><span></span></div>';
+  document.getElementById('cwMsgs').appendChild(el); scrollMsgs();
+}
+function hideTyping(){ document.getElementById('tyIndicator')?.remove(); }
+function showTypingThenMsg(text,ms){
+  showTyping();
+  setTimeout(()=>{ hideTyping(); finishBotMsg(text); },ms);
 }
 function addMsg(text,type){
   const el=document.createElement('div');
-  el.className='cmsg '+type;el.textContent=text;
-  document.getElementById('cwMsgs').appendChild(el);scrollMsgs();
+  el.className='cmsg '+type;
+  el.innerHTML=text.replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<em>$1</em>');
+  document.getElementById('cwMsgs').appendChild(el); scrollMsgs();
 }
-function scrollMsgs(){const m=document.getElementById('cwMsgs');m.scrollTop=m.scrollHeight;}
+function scrollMsgs(){ const m=document.getElementById('cwMsgs'); m.scrollTop=m.scrollHeight; }
 </script>
 </body>
 </html>
