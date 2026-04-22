@@ -831,19 +831,21 @@ function getInstantReply(msg) {
 }
 
 let chatOpen = false, chatHistory = [], isBotTyping = false;
-let welcomeSent = false; // 1. Added this flag to track if greeting was sent
+let welcomeSent = false; 
 
 function toggleChat() {
   chatOpen = !chatOpen;
   const win = document.getElementById('chatWin');
-  win.classList.toggle('on', chatOpen);
+  if (win) {
+    win.classList.toggle('on', chatOpen);
+  }
 
   if (chatOpen) {
-    document.getElementById('cinput').focus();
+    const inputField = document.getElementById('cinput');
+    if (inputField) inputField.focus();
     
-    // 2. Updated condition: Only send if it hasn't been sent before
     if (!welcomeSent) {
-      welcomeSent = true; // Mark as sent immediately
+      welcomeSent = true; 
       setTimeout(() => {
         showTypingThenMsg(
           "Namaste! 🙏 I'm ASAL's AI assistant — ask me anything about our menu, delivery timings, pricing, or how to subscribe. How can I help you today?", 
